@@ -126,3 +126,35 @@ CREATE TABLE IF NOT EXISTS system_logs (
         ON UPDATE CASCADE ON DELETE SET NULL,
     CONSTRAINT chk_log_level CHECK (log_level IN ('INFO','WARNING','ERROR','DEBUG'))
 ) ENGINE=InnoDB COMMENT='System processing logs for audit trail and debugging';
+
+
+-- ============================================================
+-- JUNCTION TABLE: transaction_tags
+-- Resolves a M:N relationship between transactions and tags
+-- A single transaction can have multiple descriptive tags
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tags (
+    tag_id      INT             NOT NULL AUTO_INCREMENT  COMMENT 'Unique tag identifier',
+    tag_name    VARCHAR(80)     NOT NULL                 COMMENT 'Tag label (e.g. recurring, high-value, suspected-fraud)',
+    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (tag_id),
+    UNIQUE KEY uq_tag_name (tag_name)
+) ENGINE=InnoDB COMMENT='Descriptive tags that can be applied to transactions';
+
+
+CREATE TABLE IF NOT EXISTS transaction_tags (
+    transaction_id  BIGINT  NOT NULL  COMMENT 'FK → transactions',
+    tag_id          INT     NOT NULL  COMMENT 'FK → tags',
+    assigned_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    assigned_by     VARCHAR(80)       COMMENT 'User/process that applied this tag',
+
+    PRIMARY KEY (transaction_id, tag_id),
+
+    CONSTRAINT fk_tt_transaction FOREIGN KEY (transaction_id)
+        REFERENCES transactions(transaction_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_tt_tag FOREIGN KEY (tag_id)
+        REFERENCES tags(tag_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB COMMENT='Junction table resolving M:N between transactions and tags';
