@@ -97,3 +97,32 @@ CREATE TABLE IF NOT EXISTS transactions (
     CONSTRAINT chk_fee_non_negative CHECK (fee >= 0),
     CONSTRAINT chk_status CHECK (status IN ('SUCCESS','FAILED','PENDING'))
 ) ENGINE=InnoDB COMMENT='Core MoMo financial transactions parsed from SMS messages';
+
+
+-- ============================================================
+-- TABLE: system_logs
+-- Tracks all data-processing events for auditing & debugging
+-- ============================================================
+CREATE TABLE IF NOT EXISTS system_logs (
+    log_id          BIGINT          NOT NULL AUTO_INCREMENT  COMMENT 'Auto-increment log identifier',
+    log_level       ENUM('INFO','WARNING','ERROR','DEBUG') NOT NULL DEFAULT 'INFO'
+                                                             COMMENT 'Severity level of the log entry',
+    event_type      VARCHAR(80)     NOT NULL                 COMMENT 'Short event tag (e.g. PARSE_SUCCESS, IMPORT_FAILED)',
+    transaction_id  BIGINT                                   COMMENT 'FK → transactions (nullable – not all logs relate to a tx)',
+    message         TEXT            NOT NULL                 COMMENT 'Human-readable log message',
+    stack_trace     TEXT                                     COMMENT 'Stack trace or raw error detail if applicable',
+    ip_address      VARCHAR(45)                              COMMENT 'IP of the process that generated this log',
+    process_name    VARCHAR(100)                             COMMENT 'Name of the script / service that wrote this log',
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (log_id),
+    INDEX idx_log_level      (log_level),
+    INDEX idx_event_type     (event_type),
+    INDEX idx_log_tx         (transaction_id),
+    INDEX idx_log_created    (created_at),
+
+    CONSTRAINT fk_log_transaction FOREIGN KEY (transaction_id)
+        REFERENCES transactions(transaction_id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT chk_log_level CHECK (log_level IN ('INFO','WARNING','ERROR','DEBUG'))
+) ENGINE=InnoDB COMMENT='System processing logs for audit trail and debugging';
