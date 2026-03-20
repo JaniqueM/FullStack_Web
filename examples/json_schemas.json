@@ -1,0 +1,576 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "momo_sms_db-schemas",
+  "title": "MoMo SMS Data Processing System – JSON Schemas & Examples",
+  "description": "JSON schemas and representative API response examples for all entities in momo_sms_db",
+  "version": "1.0.0",
+  "schemas": {
+    "TransactionCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TransactionCategory",
+      "description": "A lookup record describing a class of MoMo transaction",
+      "type": "object",
+      "required": [
+        "category_id",
+        "category_name",
+        "category_code",
+        "is_credit"
+      ],
+      "properties": {
+        "category_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Auto-increment PK"
+        },
+        "category_name": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Human-readable label"
+        },
+        "category_code": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Short machine-readable code"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_credit": {
+          "type": "boolean",
+          "description": "true = money in, false = money out"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "description": "An account holder, counterparty, agent, or merchant referenced in SMS messages",
+      "type": "object",
+      "required": [
+        "user_id",
+        "full_name",
+        "user_type",
+        "is_active"
+      ],
+      "properties": {
+        "user_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "full_name": {
+          "type": "string",
+          "maxLength": 150
+        },
+        "phone_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 20
+        },
+        "account_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 20
+        },
+        "user_type": {
+          "type": "string",
+          "enum": [
+            "ACCOUNT_HOLDER",
+            "COUNTERPARTY",
+            "AGENT",
+            "MERCHANT"
+          ]
+        },
+        "is_active": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Tag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tag",
+      "description": "A descriptive label that can be applied to one or more transactions",
+      "type": "object",
+      "required": [
+        "tag_id",
+        "tag_name"
+      ],
+      "properties": {
+        "tag_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "tag_name": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "description": "One financial event parsed from a MoMo SMS message",
+      "type": "object",
+      "required": [
+        "transaction_id",
+        "category_id",
+        "amount",
+        "fee",
+        "currency",
+        "transaction_date",
+        "sms_date",
+        "raw_sms_body",
+        "status"
+      ],
+      "properties": {
+        "transaction_id": {
+          "type": "integer"
+        },
+        "financial_tx_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 50
+        },
+        "external_tx_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 50
+        },
+        "category_id": {
+          "type": "integer"
+        },
+        "sender_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "receiver_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fee": {
+          "type": "number",
+          "minimum": 0
+        },
+        "balance_after": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 3,
+          "default": "RWF"
+        },
+        "transaction_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sms_date": {
+          "type": "integer",
+          "description": "Unix timestamp in milliseconds"
+        },
+        "raw_sms_body": {
+          "type": "string"
+        },
+        "service_center": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 20
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "SUCCESS",
+            "FAILED",
+            "PENDING"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SystemLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SystemLog",
+      "description": "An audit or debug log entry from a processing pipeline",
+      "type": "object",
+      "required": [
+        "log_id",
+        "log_level",
+        "event_type",
+        "message",
+        "created_at"
+      ],
+      "properties": {
+        "log_id": {
+          "type": "integer"
+        },
+        "log_level": {
+          "type": "string",
+          "enum": [
+            "INFO",
+            "WARNING",
+            "ERROR",
+            "DEBUG"
+          ]
+        },
+        "event_type": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "transaction_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "stack_trace": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ip_address": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 45
+        },
+        "process_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TransactionTag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TransactionTag",
+      "description": "Junction record linking a transaction to a tag (M:N bridge)",
+      "type": "object",
+      "required": [
+        "transaction_id",
+        "tag_id",
+        "assigned_at"
+      ],
+      "properties": {
+        "transaction_id": {
+          "type": "integer"
+        },
+        "tag_id": {
+          "type": "integer"
+        },
+        "assigned_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "assigned_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 80
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": {
+    "transaction_category": {
+      "_comment": "A simple credit category – money flowing into the account",
+      "category_id": 1,
+      "category_name": "Incoming Transfer",
+      "category_code": "INCOMING_TRANSFER",
+      "description": "Money received from another MoMo user",
+      "is_credit": true,
+      "created_at": "2024-05-01T00:00:00Z",
+      "updated_at": "2024-05-01T00:00:00Z"
+    },
+    "user_account_holder": {
+      "_comment": "The primary account owner whose SMS messages are processed",
+      "user_id": 1,
+      "full_name": "Abebe Chala Chebudie",
+      "phone_number": "+250795963036",
+      "account_number": "36521838",
+      "user_type": "ACCOUNT_HOLDER",
+      "is_active": true,
+      "created_at": "2024-05-01T08:00:00Z",
+      "updated_at": "2024-05-01T08:00:00Z"
+    },
+    "user_merchant": {
+      "_comment": "A merchant counterparty – no phone or account number in the source SMS",
+      "user_id": 8,
+      "full_name": "DIRECT PAYMENT LTD",
+      "phone_number": null,
+      "account_number": null,
+      "user_type": "MERCHANT",
+      "is_active": true,
+      "created_at": "2024-05-14T00:00:00Z",
+      "updated_at": "2024-05-14T00:00:00Z"
+    },
+    "tag": {
+      "_comment": "A reusable label that can be applied to many transactions",
+      "tag_id": 1,
+      "tag_name": "high-value",
+      "created_at": "2024-05-01T00:00:00Z"
+    },
+    "transaction_flat": {
+      "_comment": "A flat (normalized) transaction row as stored in the DB – FK ids only",
+      "transaction_id": 5,
+      "financial_tx_id": null,
+      "external_tx_id": null,
+      "category_id": 3,
+      "sender_id": 1,
+      "receiver_id": 3,
+      "amount": 10000.00,
+      "fee": 100.00,
+      "balance_after": 28300.00,
+      "currency": "RWF",
+      "transaction_date": "2024-05-11T20:34:47Z",
+      "sms_date": 1715452495316,
+      "raw_sms_body": "*165*S*10000 RWF transferred to Samuel Carter (250791666666) from 36521838 at 2024-05-11 20:34:47.",
+      "service_center": "+250788110381",
+      "status": "SUCCESS",
+      "notes": null,
+      "created_at": "2024-05-11T20:34:48Z",
+      "updated_at": "2024-05-11T20:34:48Z"
+    },
+    "system_log": {
+      "_comment": "A WARNING log produced when a bank-deposit SMS carries no financial_tx_id",
+      "log_id": 4,
+      "log_level": "WARNING",
+      "event_type": "MISSING_TX_ID",
+      "transaction_id": 4,
+      "message": "Bank deposit SMS at 2024-05-11 18:43:49 has no financial_tx_id – inserted with NULL",
+      "stack_trace": null,
+      "ip_address": null,
+      "process_name": "xml_importer.py",
+      "created_at": "2024-05-11T18:43:49Z"
+    },
+    "transaction_tag": {
+      "_comment": "Junction record showing transaction 7 was tagged as 'high-value' by the system",
+      "transaction_id": 7,
+      "tag_id": 1,
+      "assigned_at": "2024-05-14T21:01:01Z",
+      "assigned_by": "system"
+    },
+    "transaction_full_api_response": {
+      "_comment": "COMPLEX OBJECT – complete transaction as returned by GET /api/transactions/{id}. All FK references are expanded into nested objects so the client never needs a second request.",
+      "transaction_id": 7,
+      "financial_tx_id": "13947831685",
+      "external_tx_id": null,
+      "status": "SUCCESS",
+      "currency": "RWF",
+      "amount": 25000.00,
+      "fee": 0.00,
+      "balance_after": 4060.00,
+      "transaction_date": "2024-05-14T21:01:00Z",
+      "sms_date": 1715713269609,
+      "raw_sms_body": "*164*S*A transaction of 25000 RWF by DIRECT PAYMENT LTD on your MOMO account was successfully completed at 2024-05-14 21:01:00.",
+      "service_center": "+250788110381",
+      "notes": null,
+      "created_at": "2024-05-14T21:01:01Z",
+      "updated_at": "2024-05-14T21:01:01Z",
+      "category": {
+        "category_id": 8,
+        "category_name": "Direct Debit",
+        "category_code": "DIRECT_DEBIT",
+        "description": "Debit initiated by a third-party business (e.g. Direct Payment LTD)",
+        "is_credit": false
+      },
+      "sender": {
+        "user_id": 8,
+        "full_name": "DIRECT PAYMENT LTD",
+        "phone_number": null,
+        "account_number": null,
+        "user_type": "MERCHANT",
+        "is_active": true
+      },
+      "receiver": {
+        "user_id": 1,
+        "full_name": "Abebe Chala Chebudie",
+        "phone_number": "+250795963036",
+        "account_number": "36521838",
+        "user_type": "ACCOUNT_HOLDER",
+        "is_active": true
+      },
+      "tags": [
+        {
+          "tag_id": 6,
+          "tag_name": "direct-debit",
+          "assigned_at": "2024-05-14T21:01:01Z",
+          "assigned_by": "system"
+        },
+        {
+          "tag_id": 1,
+          "tag_name": "high-value",
+          "assigned_at": "2024-05-14T21:01:01Z",
+          "assigned_by": "system"
+        }
+      ],
+      "audit_logs": [
+        {
+          "log_id": 7,
+          "log_level": "INFO",
+          "event_type": "IMPORT_COMPLETE",
+          "message": "Import finished: 1693 messages processed, 1 skipped, 1692 inserted",
+          "created_at": "2024-05-14T21:02:00Z"
+        }
+      ]
+    },
+    "api_response_transaction_list": {
+      "_comment": "Paginated list response from GET /api/transactions?page=1&limit=2",
+      "status": "ok",
+      "page": 1,
+      "limit": 2,
+      "total": 10,
+      "data": [
+        {
+          "transaction_id": 1,
+          "financial_tx_id": "76662021700",
+          "status": "SUCCESS",
+          "amount": 2000.00,
+          "fee": 0.00,
+          "currency": "RWF",
+          "transaction_date": "2024-05-10T16:30:51Z",
+          "category": {
+            "category_code": "INCOMING_TRANSFER",
+            "category_name": "Incoming Transfer",
+            "is_credit": true
+          },
+          "sender": {
+            "user_id": 2,
+            "full_name": "Jane Smith",
+            "user_type": "COUNTERPARTY"
+          },
+          "receiver": {
+            "user_id": 1,
+            "full_name": "Abebe Chala Chebudie",
+            "user_type": "ACCOUNT_HOLDER"
+          },
+          "tags": [
+            "recurring"
+          ]
+        },
+        {
+          "transaction_id": 2,
+          "financial_tx_id": "73214484437",
+          "status": "SUCCESS",
+          "amount": 1000.00,
+          "fee": 0.00,
+          "currency": "RWF",
+          "transaction_date": "2024-05-10T16:31:39Z",
+          "category": {
+            "category_code": "MERCHANT_PAYMENT",
+            "category_name": "Outgoing Payment (Merchant)",
+            "is_credit": false
+          },
+          "sender": {
+            "user_id": 1,
+            "full_name": "Abebe Chala Chebudie",
+            "user_type": "ACCOUNT_HOLDER"
+          },
+          "receiver": {
+            "user_id": 2,
+            "full_name": "Jane Smith",
+            "user_type": "COUNTERPARTY"
+          },
+          "tags": []
+        }
+      ]
+    },
+    "api_response_monthly_summary": {
+      "_comment": "Aggregated summary from GET /api/reports/monthly – mirrors the monthly credit/debit SQL query",
+      "status": "ok",
+      "account_holder": {
+        "user_id": 1,
+        "full_name": "Abebe Chala Chebudie",
+        "account_number": "36521838"
+      },
+      "report_period": {
+        "from": "2024-05-01",
+        "to": "2024-05-31"
+      },
+      "currency": "RWF",
+      "monthly_breakdown": [
+        {
+          "month": "2024-05",
+          "total_credit": 68400.00,
+          "total_debit": 62600.00,
+          "total_fees": 450.00,
+          "net": 5800.00,
+          "tx_count": 10
+        }
+      ]
+    }
+  }
+}
