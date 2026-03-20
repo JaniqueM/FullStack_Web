@@ -303,3 +303,73 @@ INSERT INTO transaction_tags (transaction_id, tag_id, assigned_by) VALUES
 (4,  8, 'system'),   -- bank deposit
 (1,  2, 'system'),   -- recurring incoming transfer
 (10, 2, 'system');   -- recurring incoming from Linda Green
+
+
+-- ============================================================
+-- SAMPLE CRUD / QUERY TESTS
+-- ============================================================
+
+-- 1. READ: All successful transactions with category name, sender and receiver
+SELECT
+    t.transaction_id,
+    t.financial_tx_id,
+    tc.category_name,
+    u_s.full_name  AS sender,
+    u_r.full_name  AS receiver,
+    t.amount,
+    t.fee,
+    t.balance_after,
+    t.transaction_date,
+    t.status
+FROM transactions t
+JOIN transaction_categories tc ON t.category_id = tc.category_id
+LEFT JOIN users u_s ON t.sender_id = u_s.user_id
+LEFT JOIN users u_r ON t.receiver_id = u_r.user_id
+WHERE t.status = 'SUCCESS'
+ORDER BY t.transaction_date;
+
+-- 2. READ: Total outgoing amount per counterparty
+SELECT
+    u.full_name,
+    COUNT(*)            AS tx_count,
+    SUM(t.amount)       AS total_sent,
+    SUM(t.fee)          AS total_fees
+FROM transactions t
+JOIN users u ON t.receiver_id = u.user_id
+JOIN transaction_categories tc ON t.category_id = tc.category_id
+WHERE tc.is_credit = 0
+GROUP BY u.user_id, u.full_name
+ORDER BY total_sent DESC;
+
+-- 3. READ: Monthly summary of credits vs debits
+SELECT
+    DATE_FORMAT(transaction_date, '%Y-%m') AS month,
+    SUM(CASE WHEN tc.is_credit = 1 THEN t.amount ELSE 0 END) AS total_credit,
+    SUM(CASE WHEN tc.is_credit = 0 THEN t.amount ELSE 0 END) AS total_debit,
+    SUM(t.fee)                                                 AS total_fees
+FROM transactions t
+JOIN transaction_categories tc ON t.category_id = tc.category_id
+GROUP BY month
+ORDER BY month;
+
+-- 4. UPDATE: Mark a transaction as needing review
+UPDATE transactions
+SET    notes  = 'Flagged for manual review – unusual late-night high-value withdrawal',
+       status = 'PENDING'
+WHERE  financial_tx_id = '14098463509';
+
+-- 5. DELETE: Remove a duplicate/test log entry
+DELETE FROM system_logs WHERE log_level = 'DEBUG' AND event_type = 'QUERY_SLOW';
+
+-- 6. READ: Transactions with the 'high-value' tag
+SELECT
+    t.transaction_id,
+    t.financial_tx_id,
+    t.amount,
+    t.transaction_date,
+    GROUP_CONCAT(tg.tag_name ORDER BY tg.tag_name SEPARATOR ', ') AS tags
+FROM transactions t
+JOIN transaction_tags tt ON t.transaction_id = tt.transaction_id
+JOIN tags tg             ON tt.tag_id        = tg.tag_id
+GROUP BY t.transaction_id
+HAVING FIND_IN_SET('high-value', GROUP_CONCAT(tg.tag_name));
