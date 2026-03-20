@@ -158,3 +158,148 @@ CREATE TABLE IF NOT EXISTS transaction_tags (
         REFERENCES tags(tag_id)
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB COMMENT='Junction table resolving M:N between transactions and tags';
+
+
+-- ============================================================
+-- SAMPLE DATA – CATEGORIES
+-- ============================================================
+INSERT INTO transaction_categories (category_name, category_code, description, is_credit) VALUES
+('Incoming Transfer',        'INCOMING_TRANSFER',  'Money received from another MoMo user',                           1),
+('Outgoing Payment (Merchant)','MERCHANT_PAYMENT', 'Payment to a registered merchant via MoMo',                       0),
+('Peer-to-Peer Transfer',    'P2P_TRANSFER',       'Direct transfer sent to another individual MoMo account',          0),
+('Bank Deposit',             'BANK_DEPOSIT',       'Cash deposited from a linked bank or cash-in agent',              1),
+('Cash Withdrawal',          'CASH_WITHDRAWAL',    'Cash withdrawn via a MoMo agent',                                  0),
+('Airtime Purchase',         'AIRTIME_PURCHASE',   'Purchase of mobile airtime using MoMo balance',                    0),
+('Utility / Bill Payment',   'UTILITY_PAYMENT',    'Payment for electricity, water, or other utility services',        0),
+('Direct Debit',             'DIRECT_DEBIT',       'Debit initiated by a third-party business (e.g. Direct Payment LTD)', 0),
+('OTP / System Message',     'SYSTEM_MESSAGE',     'Non-financial system notification such as OTP codes',              1);
+
+
+-- ============================================================
+-- SAMPLE DATA – USERS
+-- ============================================================
+INSERT INTO users (full_name, phone_number, account_number, user_type) VALUES
+('Abebe Chala Chebudie',  '+250795963036', '36521838',     'ACCOUNT_HOLDER'),
+('Jane Smith',            '+250790777777', NULL,           'COUNTERPARTY'),
+('Samuel Carter',         '+250791666666', NULL,           'COUNTERPARTY'),
+('Alex Doe',              '+250788999999', NULL,           'COUNTERPARTY'),
+('Robert Brown',          '+250789888888', NULL,           'COUNTERPARTY'),
+('Linda Green',           '+250789000000', NULL,           'COUNTERPARTY'),
+('Agent Sophia',          '+250790777777', NULL,           'AGENT'),
+('DIRECT PAYMENT LTD',    NULL,            NULL,           'MERCHANT'),
+('MTN Cash Power',        NULL,            NULL,           'MERCHANT');
+
+
+-- ============================================================
+-- SAMPLE DATA – TAGS
+-- ============================================================
+INSERT INTO tags (tag_name) VALUES
+('high-value'),
+('recurring'),
+('agent-withdrawal'),
+('airtime'),
+('utility'),
+('direct-debit'),
+('otp'),
+('bank-deposit'),
+('suspected-fraud');
+
+
+-- ============================================================
+-- SAMPLE DATA – TRANSACTIONS (10 representative records)
+-- ============================================================
+INSERT INTO transactions
+  (financial_tx_id, category_id, sender_id, receiver_id, amount, fee, balance_after, transaction_date, sms_date, raw_sms_body, service_center, status)
+VALUES
+(
+  '76662021700', 1, 2, 1, 2000.00, 0.00, 2000.00,
+  '2024-05-10 16:30:51', 1715351458724,
+  'You have received 2000 RWF from Jane Smith (*********013) on your mobile money account at 2024-05-10 16:30:51.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '73214484437', 2, 1, 2, 1000.00, 0.00, 1000.00,
+  '2024-05-10 16:31:39', 1715351506754,
+  'TxId: 73214484437. Your payment of 1,000 RWF to Jane Smith 12845 has been completed at 2024-05-10 16:31:39.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '51732411227', 2, 1, 3, 600.00, 0.00, 400.00,
+  '2024-05-10 21:32:32', 1715369560245,
+  'TxId: 51732411227. Your payment of 600 RWF to Samuel Carter 95464 has been completed at 2024-05-10 21:32:32.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  NULL, 4, NULL, 1, 40000.00, 0.00, 40400.00,
+  '2024-05-11 18:43:49', 1715445936412,
+  '*113*R*A bank deposit of 40000 RWF has been added to your mobile money account at 2024-05-11 18:43:49.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  NULL, 3, 1, 3, 10000.00, 100.00, 28300.00,
+  '2024-05-11 20:34:47', 1715452495316,
+  '*165*S*10000 RWF transferred to Samuel Carter (250791666666) from 36521838 at 2024-05-11 20:34:47.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '13913173274', 6, 1, 9, 2000.00, 0.00, 25280.00,
+  '2024-05-12 11:41:28', 1715506895734,
+  '*162*TxId:13913173274*S*Your payment of 2000 RWF to Airtime with token has been completed at 2024-05-12 11:41:28.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '13947831685', 8, 8, 1, 25000.00, 0.00, 4060.00,
+  '2024-05-14 21:01:00', 1715713269609,
+  '*164*S*A transaction of 25000 RWF by DIRECT PAYMENT LTD on your MOMO account was successfully completed at 2024-05-14 21:01:00.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '14098463509', 5, 1, 7, 20000.00, 350.00, 6400.00,
+  '2024-05-26 02:10:27', 1716682234219,
+  'You Abebe Chala CHEBUDIE (*********036) have via agent: Agent Sophia (250790777777), withdrawn 20000 RWF at 2024-05-26 02:10:27.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '14103506143', 7, 1, 9, 4000.00, 0.00, 800.00,
+  '2024-05-26 13:31:00', 1716723067339,
+  '*162*TxId:14103506143*S*Your payment of 4000 RWF to MTN Cash Power with token 72962-79980-44699-06073 has been completed.',
+  '+250788110381', 'SUCCESS'
+),
+(
+  '45738348638', 1, 6, 1, 1400.00, 0.00, 4590.00,
+  '2024-05-19 01:49:09', 1716076156818,
+  'You have received 1400 RWF from Linda Green (*********704) on your mobile money account at 2024-05-19 01:49:09.',
+  '+250788110381', 'SUCCESS'
+);
+
+
+-- ============================================================
+-- SAMPLE DATA – SYSTEM LOGS
+-- ============================================================
+INSERT INTO system_logs (log_level, event_type, transaction_id, message, process_name) VALUES
+('INFO',    'IMPORT_START',    NULL, 'Started XML import of modified_sms_v2.xml (1693 messages)',  'xml_importer.py'),
+('INFO',    'PARSE_SUCCESS',   1,    'Transaction 76662021700 parsed and inserted successfully',    'xml_importer.py'),
+('INFO',    'PARSE_SUCCESS',   2,    'Transaction 73214484437 parsed and inserted successfully',    'xml_importer.py'),
+('WARNING', 'MISSING_TX_ID',   4,    'Bank deposit SMS at 2024-05-11 18:43:49 has no financial_tx_id – inserted with NULL', 'xml_importer.py'),
+('INFO',    'PARSE_SUCCESS',   5,    'P2P transfer 10000 RWF to Samuel Carter inserted',            'xml_importer.py'),
+('ERROR',   'PARSE_FAILED',    NULL, 'OTP message body could not be mapped to a financial category; skipped', 'xml_importer.py'),
+('INFO',    'IMPORT_COMPLETE', NULL, 'Import finished: 1693 messages processed, 1 skipped, 1692 inserted', 'xml_importer.py'),
+('INFO',    'CRON_RUN',        NULL, 'Scheduled balance reconciliation job started',                 'balance_checker.py'),
+('INFO',    'CRON_COMPLETE',   NULL, 'Balance reconciliation completed – no discrepancies found',   'balance_checker.py'),
+('DEBUG',   'QUERY_SLOW',      NULL, 'SELECT on transactions took 1.23s – consider adding index on balance_after', 'query_monitor.py');
+
+
+-- ============================================================
+-- SAMPLE DATA – TRANSACTION TAGS
+-- ============================================================
+INSERT INTO transaction_tags (transaction_id, tag_id, assigned_by) VALUES
+(5,  1, 'system'),   -- 10 000 RWF transfer → high-value
+(7,  6, 'system'),   -- direct debit by DIRECT PAYMENT LTD
+(7,  1, 'system'),   -- also high-value
+(8,  3, 'system'),   -- cash withdrawal via agent
+(8,  1, 'system'),   -- also high-value
+(6,  4, 'system'),   -- airtime purchase
+(9,  5, 'system'),   -- utility payment (electricity token)
+(4,  8, 'system'),   -- bank deposit
+(1,  2, 'system'),   -- recurring incoming transfer
+(10, 2, 'system');   -- recurring incoming from Linda Green
