@@ -1,7 +1,4 @@
 """
-STEP 2 + 3: REST API with all CRUD endpoints + Basic Authentication
-Run this file, then open Postman or use curl to test it.
-
 Start the server:   python api.py
 Stop the server:    Press Ctrl + C
 """
@@ -11,20 +8,16 @@ import base64
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
 
-# ── Configuration ─────────────────────────────────────────────────────────────
-
-PORT = 8000                  # The server will run on http://localhost:8000
+# Configuration
+PORT = 8000                  # Setting the server to run on http://localhost:8000
 TRANSACTIONS_FILE = "transactions.json"  # The file created by parse_sms.py
 
-# ── Valid username and password (Basic Auth) ───────────────────────────────────
+# Valid username and password (Basic Auth)
 VALID_USERNAME = "admin"
 VALID_PASSWORD = "password123"
 
-
-# ── Load transactions from the JSON file ──────────────────────────────────────
-
+# Loading transactions from the JSON file
 def load_transactions():
-    """Read transactions.json and return a list of records."""
     try:
         with open(TRANSACTIONS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -32,23 +25,19 @@ def load_transactions():
         print(f"ERROR: '{TRANSACTIONS_FILE}' not found. Run parse_sms.py first!")
         return []
 
-
+"""Saving the current list of transactions back to transactions.json."""
 def save_transactions(transactions):
-    """Save the current list of transactions back to transactions.json."""
     with open(TRANSACTIONS_FILE, "w", encoding="utf-8") as f:
         json.dump(transactions, f, indent=2, ensure_ascii=False)
-
 
 # Load data once when the server starts
 transactions = load_transactions()
 print(f"✅ Loaded {len(transactions)} transactions from '{TRANSACTIONS_FILE}'")
 
-
-# ── Helper: Check if the request has valid credentials ────────────────────────
-
+# Checking if the request has valid credentials
 def is_authorized(handler):
     """
-    Reads the Authorization header from the request.
+    This code reads the Authorization header from the request.
     Returns True if the username and password are correct.
     Returns False if they are missing or wrong.
     """
@@ -67,11 +56,9 @@ def is_authorized(handler):
     except Exception:
         return False
 
-
-# ── Helper: Send JSON responses ───────────────────────────────────────────────
-
+# Sending JSON responses
 def send_json(handler, status_code, data):
-    """Send a JSON response with the given status code and data."""
+    """Sending a JSON response with the given status code and data."""
     body = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
     handler.send_response(status_code)
     handler.send_header("Content-Type", "application/json")
@@ -79,20 +66,17 @@ def send_json(handler, status_code, data):
     handler.end_headers()
     handler.wfile.write(body)
 
-
-# ── The Main Request Handler ──────────────────────────────────────────────────
-
+# The Main Request Handler
 class APIHandler(BaseHTTPRequestHandler):
-
-    # Silence the default request logs (we'll print our own)
+    # This silence the default request logs to print our own
     def log_message(self, format, *args):
         pass
 
-    # ── Check auth on every request ──────────────────────────────────────────
+    # Checking auth on every request
     def check_auth(self):
         """Returns True if authorized, sends 401 and returns False if not."""
         if not is_authorized(self):
-            print(f"  ❌ 401 Unauthorized request to {self.path}")
+            print(f" 401 Unauthorized request to {self.path}")
             send_json(self, 401, {
                 "error": "Unauthorized",
                 "message": "Valid username and password required."
@@ -100,20 +84,19 @@ class APIHandler(BaseHTTPRequestHandler):
             return False
         return True
 
-    # ── GET requests ─────────────────────────────────────────────────────────
+    # GET requests
     def do_GET(self):
         if not self.check_auth():
             return
-
         parsed = urlparse(self.path)
         path_parts = parsed.path.strip("/").split("/")
 
-        # GET /transactions  →  return all transactions
+        # GET /transactions  -  returning all transactions
         if path_parts == ["transactions"]:
-            print(f"  ✅ GET /transactions → returning {len(transactions)} records")
+            print(f" GET /transactions → returning {len(transactions)} records")
             send_json(self, 200, transactions)
 
-        # GET /transactions/{id}  →  return one transaction
+        # GET /transactions/{id}  - returning one transaction
         elif len(path_parts) == 2 and path_parts[0] == "transactions":
             try:
                 record_id = int(path_parts[1])
@@ -121,27 +104,24 @@ class APIHandler(BaseHTTPRequestHandler):
                 record = next((t for t in transactions if t["id"] == record_id), None)
 
                 if record:
-                    print(f"  ✅ GET /transactions/{record_id} → found")
+                    print(f" GET /transactions/{record_id} → found")
                     send_json(self, 200, record)
                 else:
-                    print(f"  ⚠️  GET /transactions/{record_id} → not found")
+                    print(f" GET /transactions/{record_id} → not found")
                     send_json(self, 404, {"error": f"Transaction with id {record_id} not found."})
-
             except ValueError:
                 send_json(self, 400, {"error": "ID must be a number."})
-
         else:
             send_json(self, 404, {"error": "Route not found."})
 
-    # ── POST requests ─────────────────────────────────────────────────────────
+    # POST requests
     def do_POST(self):
         if not self.check_auth():
             return
-
         parsed = urlparse(self.path)
         path_parts = parsed.path.strip("/").split("/")
 
-        # POST /transactions  →  add a new transaction
+        # POST /transactions  -  adding a new transaction
         if path_parts == ["transactions"]:
             try:
                 # Read the request body
@@ -152,11 +132,9 @@ class APIHandler(BaseHTTPRequestHandler):
                 # Give it a new unique ID (max existing ID + 1)
                 new_id = max((t["id"] for t in transactions), default=0) + 1
                 new_data["id"] = new_id
-
                 transactions.append(new_data)
                 save_transactions(transactions)
-
-                print(f"  ✅ POST /transactions → created record id={new_id}")
+                print(f" POST /transactions → created record id={new_id}")
                 send_json(self, 201, {"message": "Transaction created.", "transaction": new_data})
 
             except json.JSONDecodeError:
@@ -165,15 +143,14 @@ class APIHandler(BaseHTTPRequestHandler):
         else:
             send_json(self, 404, {"error": "Route not found."})
 
-    # ── PUT requests ──────────────────────────────────────────────────────────
+    # PUT requests
     def do_PUT(self):
         if not self.check_auth():
             return
-
         parsed = urlparse(self.path)
         path_parts = parsed.path.strip("/").split("/")
 
-        # PUT /transactions/{id}  →  update an existing transaction
+        # PUT /transactions/{id}  -  updating an existing transaction
         if len(path_parts) == 2 and path_parts[0] == "transactions":
             try:
                 record_id = int(path_parts[1])
@@ -195,7 +172,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 transactions[index] = updated_data
                 save_transactions(transactions)
 
-                print(f"  ✅ PUT /transactions/{record_id} → updated")
+                print(f" PUT /transactions/{record_id} → updated")
                 send_json(self, 200, {"message": "Transaction updated.", "transaction": updated_data})
 
             except ValueError:
@@ -206,7 +183,7 @@ class APIHandler(BaseHTTPRequestHandler):
         else:
             send_json(self, 404, {"error": "Route not found."})
 
-    # ── DELETE requests ───────────────────────────────────────────────────────
+    # DELETE requests
     def do_DELETE(self):
         if not self.check_auth():
             return
@@ -214,7 +191,7 @@ class APIHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path_parts = parsed.path.strip("/").split("/")
 
-        # DELETE /transactions/{id}  →  delete a transaction
+        # DELETE /transactions/{id}  -  deleting a transaction
         if len(path_parts) == 2 and path_parts[0] == "transactions":
             try:
                 record_id = int(path_parts[1])
@@ -229,7 +206,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 transactions.remove(record)
                 save_transactions(transactions)
 
-                print(f"  ✅ DELETE /transactions/{record_id} → deleted")
+                print(f" DELETE /transactions/{record_id} → deleted")
                 send_json(self, 200, {"message": f"Transaction {record_id} deleted successfully."})
 
             except ValueError:
@@ -239,11 +216,10 @@ class APIHandler(BaseHTTPRequestHandler):
             send_json(self, 404, {"error": "Route not found."})
 
 
-# ── Start the server ──────────────────────────────────────────────────────────
-
+# Start the server
 if __name__ == "__main__":
     server = HTTPServer(("localhost", PORT), APIHandler)
-    print(f"\n🚀 API server running at http://localhost:{PORT}")
+    print(f"\n API server running at http://localhost:{PORT}")
     print(f"   Username : {VALID_USERNAME}")
     print(f"   Password : {VALID_PASSWORD}")
     print(f"\n   Endpoints available:")
@@ -257,4 +233,4 @@ if __name__ == "__main__":
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n🛑 Server stopped.")
+        print("\n Server stopped.")
