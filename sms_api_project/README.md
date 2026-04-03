@@ -80,8 +80,8 @@ python api.py
 
 You should see:
 ```
-✅ Loaded 1691 transactions from 'transactions.json'
-🚀 API server running at http://localhost:8000
+ Loaded 1691 transactions from 'transactions.json'
+ API server running at http://localhost:8000
    Username : admin
    Password : password123
 ```
